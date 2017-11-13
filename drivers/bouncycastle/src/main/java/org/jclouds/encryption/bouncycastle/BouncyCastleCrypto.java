@@ -17,6 +17,8 @@
 package org.jclouds.encryption.bouncycastle;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.CertificateException;
 
 import javax.crypto.Cipher;
@@ -29,8 +31,23 @@ import org.jclouds.encryption.internal.JCECrypto;
 @Singleton
 public class BouncyCastleCrypto extends JCECrypto {
 
+    /* The only instance of BouncyCastleProvider we'll ever use in JClouds contexts.
+     * It may even be an already registered instance.
+     * See https://issues.apache.org/jira/browse/JCLOUDS-1354
+     */
+    private static final BouncyCastleProvider BC_PROVIDER;
+    static {
+        final BouncyCastleProvider myBCProvider = new BouncyCastleProvider();
+        final Provider installedProvider = Security.getProvider(myBCProvider.getName());
+        if (installedProvider != null && installedProvider.getClass().equals(BouncyCastleProvider.class)) {
+            BC_PROVIDER = (BouncyCastleProvider) installedProvider;
+        } else {
+            BC_PROVIDER = myBCProvider;
+        }
+    }
+
    public BouncyCastleCrypto() throws NoSuchAlgorithmException, CertificateException {
-      super(new BouncyCastleProvider());
+      super(BC_PROVIDER);
    }
 
    
